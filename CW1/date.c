@@ -48,7 +48,6 @@ Date *date_create(char *datestr)
     char *s1, *s2, *datestr2;
     int day, month, year;
 
-    // printf("%s\n", datestr);
     /* Error control */
     if (!datestr)
         return NULL;
@@ -70,14 +69,9 @@ Date *date_create(char *datestr)
 
     *s1 = '\0';
 
-    // printf("\nDate create CHECK:\n");
-    // printf("s1 -> %s\t s2 -> %s\n", s1, s2);
-
     day = atoi(datestr2);
     month = atoi(s1 + 1);
     year = atoi(s2 + 1);
-
-    // printf("day -> %d\t month -> %d\t year -> %d\n", day, month, year);
 
     /* Check if given input date is valid */
     if (!date_valid(day, month, year))
@@ -134,19 +128,16 @@ int date_compare(Date *date1, Date *date2)
     if (!date1 || !date2)
         return 0;
 
-    // Compare year
     if (date1->year < date2->year)
         return -1;
     else if (date1->year > date2->year)
         return 1;
 
-    // Compare month
     if (date1->month < date2->month)
         return -1;
     else if (date1->month < date2->month)
         return 1;
 
-    // Compare day
     if (date1->day < date2->day)
         return -1;
     else if (date1->day > date2->day)

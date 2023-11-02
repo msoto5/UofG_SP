@@ -134,20 +134,15 @@ int tldlist_add(TLDList *l, char *hostname, Date *d)
     char *tld;
     int ret;
 
-    //printf("TLDLIST_ADD START:\n"); fflush(stdout);
     /* Error control */
     if (!l || !hostname || !d)
     {
-       // printf("Error control\n"); fflush(stdout);
         return 0; 
     }
-
-    //printf("aaaaaaaaa\n"); fflush(stdout);
 
     // Check if date is within range
     if (date_compare(d, l->begin) < 0 || date_compare(d, l->end) > 0)
     {
-       // printf("Date out of range\n"); fflush(stdout);
         return 0;
     }
     
@@ -155,7 +150,6 @@ int tldlist_add(TLDList *l, char *hostname, Date *d)
     tld = get_TLD_from_hostname(hostname);
     if (!tld)
     {
-       // printf("No TLD found\n"); fflush(stdout);
         return 0;
     }
 
@@ -170,7 +164,6 @@ int tldlist_add(TLDList *l, char *hostname, Date *d)
         l->count++;
         ret = 1;
     }
-    //printf("tldnode_add -> %s\n", tld); fflush(stdout);
     else
     {
         ret = tldnode_add(l->root, tld);
@@ -191,17 +184,15 @@ int tldlist_add(TLDList *l, char *hostname, Date *d)
 */
 char *get_TLD_from_hostname(char *hostname)
 {
-    char *tld = NULL;
-    //printf("hostname -> %s\n", hostname);
-    char* dot = strrchr(hostname, '.');
+    char *tld = NULL, *dot = NULL;
+    
+    dot = strrchr(hostname, '.');
     if (dot == NULL)
     {
         return NULL; // No dot found
     }
 
-    //printf("hostname -> %s\tdot -> %s\n", hostname, dot+1);
     tld = strndup(dot + 1, TLD_SIZE-1);
-    //printf("tld -> %s\n", tld);
     if (tld == NULL)
     {
         return NULL;
@@ -266,7 +257,6 @@ int tldnode_add(TLDNode *node, char *tld)
     else    /* Node already exist */
     {
         node->count++;
-        //printf("node %s->count -> %ld\n", node->tld, node->count);
         return 1;
     }
 }
@@ -341,7 +331,7 @@ TLDNode *tldnode_get_min(TLDNode *node)
 TLDNode *tldlist_iter_next(TLDIterator *iter)
 {
     TLDNode *act;
-    //printf("tldlist_iter_next\n"); fflush(stdout);
+
     if (!iter)
     {
         return NULL;
@@ -349,27 +339,23 @@ TLDNode *tldlist_iter_next(TLDIterator *iter)
 
     if (!iter->current)     /* First call */
     {
-        //printf("No current\n"); fflush(stdout);
         iter->current = tldnode_get_min(iter->list->root);
         return iter->current;
     }
     /* If I have a right child -> Next = right child */
     else if (iter->current->right)   
     {
-        //printf("Busco el minimo de mi hijo derecho\n"); fflush(stdout);
         iter->current = tldnode_get_min(iter->current->right);
         return iter->current;
     }
     /* No right child && no parent -> No more elements */
     else if (!iter->current->parent)    
     {
-        //printf("No hay padre\n"); fflush(stdout);
         return NULL;
     }
     /* No right child && parent && node is left child -> Next = parent */
     else if (iter->current->parent->left == iter->current)
     {
-        //printf("Soy el hijo izquierdo\n"); fflush(stdout);
         iter->current = iter->current->parent;
         return iter->current;
     }
@@ -377,11 +363,9 @@ TLDNode *tldlist_iter_next(TLDIterator *iter)
        Next = parent of the first parent (going up the tree) that is left child */
     else if (iter->current->parent->right == iter->current)
     {
-        //printf("Soy el hijo derecho\n"); fflush(stdout);
         act = iter->current;
         while (act->parent->right == act)
         {
-            //printf("act -> %s\n", act->tld);
             act = act->parent;
             if (act->parent == NULL)
             {
@@ -392,7 +376,7 @@ TLDNode *tldlist_iter_next(TLDIterator *iter)
         iter->current = act->parent;
         return iter->current;
     }
-    //printf("Soy bobo\n"); fflush(stdout);
+    
     return NULL;
 }
 
