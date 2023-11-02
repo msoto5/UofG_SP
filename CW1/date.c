@@ -15,21 +15,21 @@ struct date
 int date_valid(int day, int month, int year);
 
 /**
- * date_valid checks if a date is valid
- *
- * returns 1 if valid, 0 if not
+ * @brief Checks if a date is valid
+ * @param day Day of the date
+ * @param month Month of the date
+ * @param year Year of the date
+ * @return 1 if valid, 0 if not
  */
 int date_valid(int day, int month, int year)
 {
-    // Check if year is valid
+    /* Enough to check that 0<day<32, 0<month<13, year>0.*/
     if (year < 0)
         return 0;
 
-    // Check if month is valid
     if (month < 1 || month > 12)
         return 0;
 
-    // Check if day is valid
     if (day < 1 || day > 31)
         return 0;
 
@@ -48,8 +48,8 @@ Date *date_create(char *datestr)
     char *s1, *s2, *datestr2;
     int day, month, year;
 
-    //printf("%s\n", datestr);
-    // Error control
+    // printf("%s\n", datestr);
+    /* Error control */
     if (!datestr)
         return NULL;
 
@@ -57,10 +57,11 @@ Date *date_create(char *datestr)
     if (!datestr2)
         return NULL;
 
+    /* Get date, month and year */
     s2 = strrchr(datestr2, '/');
     if (!s2)
         return NULL;
-    
+
     *s2 = '\0';
 
     s1 = strrchr(datestr2, '/');
@@ -69,21 +70,22 @@ Date *date_create(char *datestr)
 
     *s1 = '\0';
 
-    //printf("\nDate create CHECK:\n");
-    //printf("s1 -> %s\t s2 -> %s\n", s1, s2);
-
-
-
+    // printf("\nDate create CHECK:\n");
+    // printf("s1 -> %s\t s2 -> %s\n", s1, s2);
 
     day = atoi(datestr2);
     month = atoi(s1 + 1);
     year = atoi(s2 + 1);
-    //printf("day -> %d\t month -> %d\t year -> %d\n", day, month, year);
+
+    // printf("day -> %d\t month -> %d\t year -> %d\n", day, month, year);
+
+    /* Check if given input date is valid */
     if (!date_valid(day, month, year))
     {
         return NULL;
     }
 
+    /* Create Date structure */
     d = (Date *)malloc(sizeof(Date));
     if (!d)
     {
@@ -107,7 +109,7 @@ Date *date_duplicate(Date *d)
 {
     Date *d2 = NULL;
 
-    // Error Control
+    /* Error Control */
     if (!d)
         return NULL;
 
@@ -128,7 +130,7 @@ Date *date_duplicate(Date *d)
  */
 int date_compare(Date *date1, Date *date2)
 {
-    // Error Control
+    /* Error Control */
     if (!date1 || !date2)
         return 0;
 
