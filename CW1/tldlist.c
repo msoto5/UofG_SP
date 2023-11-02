@@ -36,8 +36,6 @@ void tldnode_destroy(TLDNode *node);
 char *get_TLD_from_hostname(char *hostname);
 int tldnode_add(TLDNode *node, char *tld);
 TLDNode *tldnode_get_min(TLDNode *node);
-TLDNode *tldnode_get_next(TLDNode *node);
-
 /*
  * tldlist_create generates a list structure for storing counts against
  * top level domains (TLDs)
@@ -140,20 +138,20 @@ int tldlist_add(TLDList *l, char *hostname, Date *d)
         return 0; 
     }
 
-    // Check if date is within range
+    /* Check if date is within range */
     if (date_compare(d, l->begin) < 0 || date_compare(d, l->end) > 0)
     {
         return 0;
     }
     
-    // Get TLD from hostname
+    /* Get TLD from hostname */
     tld = get_TLD_from_hostname(hostname);
     if (!tld)
     {
         return 0;
     }
 
-    // Add TLD to list
+    /* Add TLD to list */
     if (!l->root)     // Tree is empty -> Add first element
     {
         l->root = tldnode_create(tld, NULL);
@@ -376,7 +374,7 @@ TLDNode *tldlist_iter_next(TLDIterator *iter)
         iter->current = act->parent;
         return iter->current;
     }
-    
+
     return NULL;
 }
 
