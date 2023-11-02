@@ -4,30 +4,30 @@
 #include <stdio.h>
 #include "tldlist.h"
 
-#define TLD_SIZE 4      /* Size of TLD String */
+#define TLD_SIZE 4 /* Size of TLD String */
 
 struct tldlist
 {
     Date *begin;
     Date *end;
-    TLDNode *root;  /* Root of the tree */
-    long count;     /* Number of successful tldlist_add() calls */
+    TLDNode *root; /* Root of the tree */
+    long count;    /* Number of successful tldlist_add() calls */
 };
 
 struct tldnode
 {
-    unsigned long count;    /* Number of times the TLD was added */
-    char tld[TLD_SIZE];     /* Top Level Domain */
+    unsigned long count; /* Number of times the TLD was added */
+    char tld[TLD_SIZE];  /* Top Level Domain */
 
     TLDNode *left;
     TLDNode *right;
-    TLDNode *parent;        
+    TLDNode *parent;
 };
 
 struct tlditerator
 {
-    TLDNode *current;   /* Current node */
-    TLDList *list;      /* List to iterate */
+    TLDNode *current; /* Current node */
+    TLDList *list;    /* List to iterate */
 };
 
 // Private function prototypes
@@ -69,13 +69,13 @@ TLDList *tldlist_create(Date *begin, Date *end)
 
 /**
  * Generate a node structure
-*/
+ */
 TLDNode *tldnode_create(char *tld, TLDNode *parent)
 {
     TLDNode *n = NULL;
 
     /* Error control */
-    if (!tld)   /* parent can be NULL -> the root */
+    if (!tld) /* parent can be NULL -> the root */
     {
         return NULL;
     }
@@ -111,7 +111,7 @@ void tldlist_destroy(TLDList *tld)
 
 /**
  * Frees a node structure
-*/
+ */
 void tldnode_destroy(TLDNode *node)
 {
     if (node)
@@ -135,7 +135,7 @@ int tldlist_add(TLDList *l, char *hostname, Date *d)
     /* Error control */
     if (!l || !hostname || !d)
     {
-        return 0; 
+        return 0;
     }
 
     /* Check if date is within range */
@@ -143,7 +143,7 @@ int tldlist_add(TLDList *l, char *hostname, Date *d)
     {
         return 0;
     }
-    
+
     /* Get TLD from hostname */
     tld = get_TLD_from_hostname(hostname);
     if (!tld)
@@ -152,7 +152,7 @@ int tldlist_add(TLDList *l, char *hostname, Date *d)
     }
 
     /* Add TLD to list */
-    if (!l->root)     // Tree is empty -> Add first element
+    if (!l->root) // Tree is empty -> Add first element
     {
         l->root = tldnode_create(tld, NULL);
         if (!l->root)
@@ -170,27 +170,27 @@ int tldlist_add(TLDList *l, char *hostname, Date *d)
             l->count++;
         }
     }
-    
+
     return ret;
 }
 
 /**
  * @brief Get the TLD from a hostname
- * 
+ *
  * @param hostname
  * @return pointer to string in heap (size = TLD_SIZE) if successful, NULL if not
-*/
+ */
 char *get_TLD_from_hostname(char *hostname)
 {
     char *tld = NULL, *dot = NULL;
-    
+
     dot = strrchr(hostname, '.');
     if (dot == NULL)
     {
         return NULL; // No dot found
     }
 
-    tld = strndup(dot + 1, TLD_SIZE-1);
+    tld = strndup(dot + 1, TLD_SIZE - 1);
     if (tld == NULL)
     {
         return NULL;
@@ -201,11 +201,11 @@ char *get_TLD_from_hostname(char *hostname)
 
 /**
  * @brief Recursive function that adds a TLDNode to the tree
- * 
- * @param node 
- * @param tld 
+ *
+ * @param node
+ * @param tld
  * @return 1 if successful, 0 if not
-*/
+ */
 int tldnode_add(TLDNode *node, char *tld)
 {
     int cmp;
@@ -252,7 +252,7 @@ int tldnode_add(TLDNode *node, char *tld)
             return tldnode_add(node->right, tld);
         }
     }
-    else    /* Node already exist */
+    else /* Node already exist */
     {
         node->count++;
         return 1;
@@ -300,10 +300,10 @@ TLDIterator *tldlist_iter_create(TLDList *tld)
 
 /**
  * @brief Get the minimum node of a tree.
- * 
+ *
  * @param node
  * @return pointer to the minimum node if successful, NULL if not
-*/
+ */
 TLDNode *tldnode_get_min(TLDNode *node)
 {
     TLDNode *act;
@@ -318,7 +318,7 @@ TLDNode *tldnode_get_min(TLDNode *node)
     {
         act = act->left;
     }
-    
+
     return act;
 }
 
@@ -335,19 +335,19 @@ TLDNode *tldlist_iter_next(TLDIterator *iter)
         return NULL;
     }
 
-    if (!iter->current)     /* First call */
+    if (!iter->current) /* First call */
     {
         iter->current = tldnode_get_min(iter->list->root);
         return iter->current;
     }
     /* If I have a right child -> Next = right child */
-    else if (iter->current->right)   
+    else if (iter->current->right)
     {
         iter->current = tldnode_get_min(iter->current->right);
         return iter->current;
     }
     /* No right child && no parent -> No more elements */
-    else if (!iter->current->parent)    
+    else if (!iter->current->parent)
     {
         return NULL;
     }
@@ -357,7 +357,7 @@ TLDNode *tldlist_iter_next(TLDIterator *iter)
         iter->current = iter->current->parent;
         return iter->current;
     }
-    /* No right child && parent && node is right child -> 
+    /* No right child && parent && node is right child ->
        Next = parent of the first parent (going up the tree) that is left child */
     else if (iter->current->parent->right == iter->current)
     {
@@ -369,7 +369,6 @@ TLDNode *tldlist_iter_next(TLDIterator *iter)
             {
                 return NULL;
             }
-            
         }
         iter->current = act->parent;
         return iter->current;
@@ -398,7 +397,7 @@ char *tldnode_tldname(TLDNode *node)
     {
         return NULL;
     }
-    
+
     return node->tld;
 }
 
@@ -412,6 +411,6 @@ long tldnode_count(TLDNode *node)
     {
         return 0;
     }
-    
+
     return node->count;
 }
