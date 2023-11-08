@@ -19,7 +19,7 @@ clean:
 	rm -f *.o tldmonitor
 
 %.out: %.txt tldmonitor
-    ./tldmonitor 01/01/2000 01/09/2020 < $< | sort -n | diff - $@
+	./tldmonitor 01/01/2000 01/09/2020 < $< | sort -n | diff - $@
 
 testdate: testdate.o date.o
 	clang -Wall -Werror -o testdate testdate.o date.o
