@@ -1,5 +1,5 @@
 # Lab 6 Handout - PThread intro
-We will be looking at a very simple program that is used as an example in Lecture 6. You can download the code by clicking here
+We will be looking at a very simple program that is used as an example in Lecture 6. You can download the code by [clicking here](https://moodle.gla.ac.uk/pluginfile.php/6898478/mod_page/content/10/pthread.c)
 
 1. Download and read the code. The code simply creates a thread using the PThread library. The thread itself does nothing but print a static string.
 2. Notice the header files that the program includes. Beside the standard libraries stdio.h and stdlib.h, it includes:
