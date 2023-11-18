@@ -12,12 +12,13 @@ void sum(std::vector<int>::iterator begin,
 }
  
 int main() {
-  auto numbers = std::vector<int>{ 1, 2, 3, 4, 5, 6 };
+  auto numbers = std::vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
   std::promise<int> sum_promise;
   std::future<int> sum_future = sum_promise.get_future();
   auto t = std::thread(sum, numbers.begin(), numbers.end(), std::move(sum_promise));
 
   printf("result = %d\n", sum_future.get());
+  // printf("result2 = %d\n", sum_future.get()); Dos veces falla
 
   t.join();
 }

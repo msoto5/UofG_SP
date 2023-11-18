@@ -6,4 +6,5 @@ int main() {
       printf("Hello World from a cpp thread!\n");
     });
 
+    //t.join();
 }

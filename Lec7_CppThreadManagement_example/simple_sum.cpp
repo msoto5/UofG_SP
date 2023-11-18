@@ -17,7 +17,7 @@ int parallelSum(std::vector<int>::iterator begin, std::vector<int>::iterator end
 }
 
 int main() {
-  auto vec = std::vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+  auto vec = std::vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
   auto sum = parallelSum(vec.begin(), vec.end(), 0);
   printf("sum: %d\n", sum);
 }

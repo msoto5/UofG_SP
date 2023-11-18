@@ -3,6 +3,8 @@
 #include <list>
 #include <thread>
 #include <optional>
+#include <mutex>
+#include <iostream>
 
 struct list {
 private:
@@ -26,6 +28,7 @@ public:
     }
     int value = *iter;
     list.erase(iter);
+    std::cout << "Thread ID: " << std::this_thread::get_id() << "He eliminado " << value << std::endl;
     return value;
   }
 

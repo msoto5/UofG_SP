@@ -58,7 +58,7 @@ int main() {
       for (int i = 0; i < 10; i++) {
         int item = bb->removeItem();
         printf("    consumed item %d\n", item);
-        std::this_thread::sleep_for(std::chrono::milliseconds(randInt()));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
       }
       return "consumer done";
     });
@@ -68,7 +68,7 @@ int main() {
         int item = randInt();
         printf("produced item %d\n", item);
         bb->addItem(item);
-        std::this_thread::sleep_for(std::chrono::milliseconds(randInt()));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
       return "producer done";
     });

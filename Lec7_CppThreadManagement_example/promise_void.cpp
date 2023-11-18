@@ -19,6 +19,8 @@ int main()
     auto t = std::thread(do_work, std::move(barrier));
     printf("Start waiting for signal\n");
     barrier_future.wait();
+    barrier_future.wait();
+    barrier_future.wait();
     printf("Waiting finished, signal received\n");
     t.join();
 }
