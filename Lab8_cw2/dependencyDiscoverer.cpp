@@ -1,3 +1,10 @@
+/**
+ * AUTHORSHIP STATEMENT:
+ * This is my own work as defined in the Academic Ethics agreement I have signed 
+ * except the functions and comments provided by the course professor at the 
+ * beginning of this Assessed Exercise 2.
+*/
+
 /*
  * usage: ./dependencyDiscoverer [-Idir] ... file.c|file.l|file.y ...
  *
@@ -106,9 +113,91 @@
 #include <unordered_set>
 #include <list>
 
+#include <mutex>
+#include <condition_variable>
+#include <future>
+#include <chrono>
+#include <thread>
+
+#define CRAWLER_THREADS_DEFAULT 2
+
+// Safe concurrency structs
+struct ConcQueue
+{
+  std::list<std::string> queue;
+  std::mutex m;
+
+  void push_back(std::string s) {
+    std::unique_lock<std::mutex> lock(m);
+    queue.push_back(s);
+  }
+
+  std::string pop_front() {
+    std::unique_lock<std::mutex> lock(m);
+    if (!queue.empty()) {
+      auto s = queue.front();
+      queue.pop_front();
+      return s;
+    }
+    return "";
+  }
+
+  std::string front() {
+    std::unique_lock<std::mutex> lock(m);
+    if (!queue.empty()) {
+      return queue.front();
+    }
+    return "";
+  }
+
+  size_t size() {
+    std::unique_lock<std::mutex> lock(m);
+    return queue.size();
+  }
+
+  std::string get_next() {
+    std::unique_lock<std::mutex> lock(m);
+    if (!queue.empty()) {
+      auto s = queue.front();
+      queue.pop_front();
+      return s;
+    } else {
+      return "";
+    }
+  }
+};
+
+struct ConcMap
+{
+  std::unordered_map<std::string, std::list<std::string>> theTable;
+  std::mutex m;
+
+  auto get(std::string s) {
+    std::unique_lock<std::mutex> lock(m);
+    return &theTable[s];
+  }
+
+  auto find(std::string s) {
+    std::unique_lock<std::mutex> lock(m);
+    return theTable.find(s);
+  }
+
+  auto end() {
+    std::unique_lock<std::mutex> lock(m);
+    return theTable.end();
+  }
+
+  auto insert(std::pair<std::string, std::list<std::string>> p) {
+    std::unique_lock<std::mutex> lock(m);
+    return theTable.insert(p);
+  }
+};
+
 std::vector<std::string> dirs;
-std::unordered_map<std::string, std::list<std::string>> theTable;
-std::list<std::string> workQ;
+//std::unordered_map<std::string, std::list<std::string>> theTable;
+//std::list<std::string> workQ;
+ConcMap theTable;
+ConcQueue workQ;
 
 std::string dirName(const char * c_str) {
   std::string s = c_str; // s takes ownership of the string content by allocating memory for it
@@ -145,7 +234,8 @@ static void process(const char *file, std::list<std::string> *ll) {
   FILE *fd = openFile(file);
   if (fd == NULL) {
     fprintf(stderr, "Error opening %s\n", file);
-    exit(-1);
+    //exit(-1);
+    return;
   }
   while (fgets(buf, sizeof(buf), fd) != NULL) {
     char *p = buf;
@@ -174,6 +264,7 @@ static void process(const char *file, std::list<std::string> *ll) {
     theTable.insert( { name, {} } );
     // ... append file name to workQ
     workQ.push_back( name );
+    //printf("%s%zu\n", ("Added " + std::string(name) + " to workQ -> ").c_str(), workQ.size());
   }
   // 3. close file
   fclose(fd);
@@ -191,7 +282,7 @@ static void printDependencies(std::unordered_set<std::string> *printed,
     std::string name = toProcess->front();
     toProcess->pop_front();
     // 3. lookup file in the table, yielding list of dependencies
-    std::list<std::string> *ll = &theTable[name];
+    std::list<std::string> *ll = theTable.get(name);
     // 4. iterate over dependencies
     for (auto iter = ll->begin(); iter != ll->end(); iter++) {
       // 4a. if filename is already in the printed table, continue
@@ -204,6 +295,30 @@ static void printDependencies(std::unordered_set<std::string> *printed,
       toProcess->push_back( *iter );
     }
   }
+}
+
+void do_work(std::promise<void> barrier) 
+{
+  std::string filename;
+
+  //printf("Args: %zu\n", workQ.size());
+  // 4. for each file on the workQ
+  while ( (filename = workQ.get_next()) != "" ) {
+    //printf("(%d) WorkQ size: %zu\n", std::this_thread::get_id(), workQ.size());
+    
+    //std::string filename = workQ.pop_front();
+    //printf("(%d) Processing %s\n", std::this_thread::get_id(), filename.c_str());
+
+    if (theTable.find(filename) == theTable.end()) {
+      fprintf(stderr, "Mismatch between table and workQ\n");
+      break;
+    }
+
+    // 4a&b. lookup dependencies and invoke 'process'
+    process(filename.c_str(), theTable.get(filename));
+  }
+  //printf("Work done, signal now\n");
+  barrier.set_value();
 }
 
 int main(int argc, char *argv[]) {
@@ -233,6 +348,12 @@ int main(int argc, char *argv[]) {
     }
     dirs.push_back( str.substr(last) );
   }
+  //print dirs
+  /*printf("Dirs: ");
+  for (auto iter = dirs.begin(); iter != dirs.end(); iter++) {
+    printf("%s ", iter->c_str());
+  }*/
+
   // 2. finished assembling dirs vector
 
   // 3. for each file argument ...
@@ -255,9 +376,37 @@ int main(int argc, char *argv[]) {
     // 3c. append file.ext on workQ
     workQ.push_back( argv[i] );
   }
+  //printf("Tamano inicial de workQ: %zu\n", workQ.size());
 
-  // 4. for each file on the workQ
-  while ( workQ.size() > 0 ) {
+  // 3.5. Get the number of threads to use
+  char *numThreadsEnv = getenv("CRAWLER_THREADS");
+  int numThreads = CRAWLER_THREADS_DEFAULT;
+  if (numThreadsEnv) {
+    numThreads = atoi(numThreadsEnv);
+    if (numThreads <= 0)
+      numThreads = CRAWLER_THREADS_DEFAULT; 
+  }
+  //printf("Using %d threads\n", numThreads);
+
+  // 3.6. Create the threads
+  std::vector<std::promise<void>> wpromises(numThreads);
+  std::vector<std::future<void>> wfutures(numThreads);
+  std::vector<std::thread> workers(numThreads);
+  for (i = 0; i < numThreads; i++) {
+    //printf("Creating thread %d\n", i);
+    wfutures[i] = wpromises[i].get_future();
+    workers[i] = std::thread(do_work, std::move(wpromises[i]));
+  }
+
+  // 3.7. Wait for the threads to finish
+  for (i = 0; i < numThreads; i++) {
+    //printf("Waiting for thread %d\n", i);
+    wfutures[i].wait();
+    workers[i].join();
+  }
+
+  // 4. for each file on the workQ => in do_work
+  /*while ( workQ.size() > 0 ) {
     std::string filename = workQ.front();
     workQ.pop_front();
 
@@ -268,7 +417,7 @@ int main(int argc, char *argv[]) {
 
     // 4a&b. lookup dependencies and invoke 'process'
     process(filename.c_str(), &theTable[filename]);
-  }
+  }*/
 
   // 5. for each file argument
   for (i = start; i < argc; i++) {
