@@ -379,12 +379,23 @@ int main(int argc, char *argv[]) {
   //printf("Tamano inicial de workQ: %zu\n", workQ.size());
 
   // 3.5. Get the number of threads to use
-  char *numThreadsEnv = getenv("CRAWLER_THREADS");
+  /*char *numThreadsEnv = getenv("CRAWLER_THREADS");
   int numThreads = CRAWLER_THREADS_DEFAULT;
   if (numThreadsEnv) {
     numThreads = atoi(numThreadsEnv);
     if (numThreads <= 0)
       numThreads = CRAWLER_THREADS_DEFAULT; 
+  }*/
+  char *numThreadsEnv = getenv("CRAWLER_THREADS");
+  int numThreads = CRAWLER_THREADS_DEFAULT;
+  if (numThreadsEnv) {
+    try {
+      numThreads = std::stoi(numThreadsEnv);
+      if (numThreads < 0)
+        numThreads = CRAWLER_THREADS_DEFAULT;
+    } catch (...) {
+        numThreads = CRAWLER_THREADS_DEFAULT;
+    }
   }
   //printf("Using %d threads\n", numThreads);
 
