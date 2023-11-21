@@ -421,7 +421,7 @@ int main(int argc, char *argv[]) {
   }
   else
   {
-    do_work(std::move(std::promise<void>()));
+    do_work((std::promise<void>()));
   }
   
   // 4. for each file on the workQ => in do_work
