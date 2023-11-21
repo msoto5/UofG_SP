@@ -397,7 +397,7 @@ int main(int argc, char *argv[]) {
         numThreads = CRAWLER_THREADS_DEFAULT;
     }
   }
-  //printf("Using %d threads\n", numThreads);
+  printf("Using %d threads\n", numThreads);
 
   // 3.6. Create the threads
   std::vector<std::promise<void>> wpromises(numThreads);
