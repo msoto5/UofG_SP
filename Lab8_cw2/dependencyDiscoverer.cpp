@@ -319,6 +319,7 @@ void do_work(std::promise<void> barrier)
   }
   //printf("Work done, signal now\n");
   barrier.set_value();
+  
 }
 
 int main(int argc, char *argv[]) {
@@ -400,22 +401,29 @@ int main(int argc, char *argv[]) {
   printf("Using %d threads\n", numThreads);
 
   // 3.6. Create the threads
-  std::vector<std::promise<void>> wpromises(numThreads);
-  std::vector<std::future<void>> wfutures(numThreads);
-  std::vector<std::thread> workers(numThreads);
-  for (i = 0; i < numThreads; i++) {
-    //printf("Creating thread %d\n", i);
-    wfutures[i] = wpromises[i].get_future();
-    workers[i] = std::thread(do_work, std::move(wpromises[i]));
-  }
+  if (numThreads > 0)
+  {
+    std::vector<std::promise<void>> wpromises(numThreads);
+    std::vector<std::future<void>> wfutures(numThreads);
+    std::vector<std::thread> workers(numThreads);
+    for (i = 0; i < numThreads; i++) {
+      //printf("Creating thread %d\n", i);
+      wfutures[i] = wpromises[i].get_future();
+      workers[i] = std::thread(do_work, std::move(wpromises[i]));
+    }
 
-  // 3.7. Wait for the threads to finish
-  for (i = 0; i < numThreads; i++) {
-    //printf("Waiting for thread %d\n", i);
-    wfutures[i].wait();
-    workers[i].join();
+    // 3.7. Wait for the threads to finish
+    for (i = 0; i < numThreads; i++) {
+      //printf("Waiting for thread %d\n", i);
+      wfutures[i].wait();
+      workers[i].join();
+    }
   }
-
+  else
+  {
+    do_work(std::move(std::promise<void>()));
+  }
+  
   // 4. for each file on the workQ => in do_work
   /*while ( workQ.size() > 0 ) {
     std::string filename = workQ.front();
