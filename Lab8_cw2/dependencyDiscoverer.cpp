@@ -121,17 +121,30 @@
 
 #define CRAWLER_THREADS_DEFAULT 2
 
-// Safe concurrency structs
+/**
+ * @brief A concurrent queue of strings
+*/
 struct ConcQueue
 {
   std::list<std::string> queue;
   std::mutex m;
 
+  /**
+   * @brief Pushes a string to the back of the queue
+   * 
+   * @param s The string to be pushed
+   * @return void
+  */
   void push_back(std::string s) {
     std::unique_lock<std::mutex> lock(m);
     queue.push_back(s);
   }
 
+  /**
+   * @brief Pops a string from the front of the queue
+   * 
+   * @return std::string The string that was popped
+  */
   std::string pop_front() {
     std::unique_lock<std::mutex> lock(m);
     if (!queue.empty()) {
@@ -142,6 +155,11 @@ struct ConcQueue
     return "";
   }
 
+  /**
+   * @brief Returns the string at the front of the queue
+   * 
+   * @return std::string The string at the front of the queue
+  */
   std::string front() {
     std::unique_lock<std::mutex> lock(m);
     if (!queue.empty()) {
@@ -150,11 +168,21 @@ struct ConcQueue
     return "";
   }
 
+  /**
+   * @brief Returns the size of the queue
+   * 
+   * @return size_t The size of the queue
+  */
   size_t size() {
     std::unique_lock<std::mutex> lock(m);
     return queue.size();
   }
 
+  /**
+   * @brief Returns the next string in the queue
+   * 
+   * @return std::string The next string in the queue or an empty string if the queue is empty
+  */
   std::string get_next() {
     std::unique_lock<std::mutex> lock(m);
     if (!queue.empty()) {
@@ -167,26 +195,52 @@ struct ConcQueue
   }
 };
 
+/**
+ * @brief A concurrent map of strings to lists of strings
+*/
 struct ConcMap
 {
   std::unordered_map<std::string, std::list<std::string>> theTable;
   std::mutex m;
 
+  /**
+   * @brief Returns the list of strings associated with a key
+   * 
+   * @param s The key
+   * @return std::list<std::string>* Pointer to the list of strings associated with the key
+  */
   auto get(std::string s) {
     std::unique_lock<std::mutex> lock(m);
     return &theTable[s];
   }
 
+  /**
+   * @brief Returns an iterator to the element with the given key
+   * 
+   * @param s The key
+   * @return An iterator to the element with the given key
+  */
   auto find(std::string s) {
     std::unique_lock<std::mutex> lock(m);
     return theTable.find(s);
   }
 
+  /**
+   * @brief Returns an iterator to the beginning of the map
+   * 
+   * @return An iterator to the beginning of the map
+  */
   auto end() {
     std::unique_lock<std::mutex> lock(m);
     return theTable.end();
   }
 
+  /**
+   * @brief Inserts a key-value pair into the map
+   * 
+   * @param p The key-value pair
+   * @return An iterator to the inserted element
+  */
   auto insert(std::pair<std::string, std::list<std::string>> p) {
     std::unique_lock<std::mutex> lock(m);
     return theTable.insert(p);
@@ -264,6 +318,7 @@ static void process(const char *file, std::list<std::string> *ll) {
     theTable.insert( { name, {} } );
     // ... append file name to workQ
     workQ.push_back( name );
+    
     //printf("%s%zu\n", ("Added " + std::string(name) + " to workQ -> ").c_str(), workQ.size());
   }
   // 3. close file
@@ -297,15 +352,20 @@ static void printDependencies(std::unordered_set<std::string> *printed,
   }
 }
 
+/**
+ * @brief The function that each thread will execute. 
+ * It will make step 4 of the main function.
+ * 
+ * @param barrier A promise that will be set when the thread finishes
+ * @return void
+*/
 void do_work(std::promise<void> barrier) 
 {
   std::string filename;
 
-  //printf("Args: %zu\n", workQ.size());
   // 4. for each file on the workQ
   while ( (filename = workQ.get_next()) != "" ) {
     //printf("(%d) WorkQ size: %zu\n", std::this_thread::get_id(), workQ.size());
-    
     //std::string filename = workQ.pop_front();
     //printf("(%d) Processing %s\n", std::this_thread::get_id(), filename.c_str());
 
@@ -349,12 +409,6 @@ int main(int argc, char *argv[]) {
     }
     dirs.push_back( str.substr(last) );
   }
-  //print dirs
-  /*printf("Dirs: ");
-  for (auto iter = dirs.begin(); iter != dirs.end(); iter++) {
-    printf("%s ", iter->c_str());
-  }*/
-
   // 2. finished assembling dirs vector
 
   // 3. for each file argument ...
@@ -377,16 +431,8 @@ int main(int argc, char *argv[]) {
     // 3c. append file.ext on workQ
     workQ.push_back( argv[i] );
   }
-  //printf("Tamano inicial de workQ: %zu\n", workQ.size());
 
   // 3.5. Get the number of threads to use
-  /*char *numThreadsEnv = getenv("CRAWLER_THREADS");
-  int numThreads = CRAWLER_THREADS_DEFAULT;
-  if (numThreadsEnv) {
-    numThreads = atoi(numThreadsEnv);
-    if (numThreads <= 0)
-      numThreads = CRAWLER_THREADS_DEFAULT; 
-  }*/
   char *numThreadsEnv = getenv("CRAWLER_THREADS");
   int numThreads = CRAWLER_THREADS_DEFAULT;
   if (numThreadsEnv) {
@@ -398,7 +444,7 @@ int main(int argc, char *argv[]) {
         numThreads = CRAWLER_THREADS_DEFAULT;
     }
   }
-  printf("Using %d threads\n", numThreads);
+  //printf("Using %d threads\n", numThreads);
 
   // 3.6. Create the threads
   if (numThreads > 0)
