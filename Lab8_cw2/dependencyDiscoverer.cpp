@@ -3,6 +3,10 @@
  * This is my own work as defined in the Academic Ethics agreement I have signed 
  * except the functions and comments provided by the course professor at the 
  * beginning of this Assessed Exercise 2.
+ * 
+ * - NOTE: After doing my report, I check if everything works before submitting.
+ * I just found out that sometimes it can print in a different order than it is in
+ * the file output. However, the output is still correct.
 */
 
 /*
