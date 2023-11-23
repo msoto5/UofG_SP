@@ -419,7 +419,7 @@ int main(int argc, char *argv[]) {
       workers[i].join();
     }
   }
-  else
+  else // Do sequential processing
   {
     do_work((std::promise<void>()));
   }
